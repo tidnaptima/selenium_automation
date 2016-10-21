@@ -1,0 +1,60 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
+from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoAlertPresentException
+import unittest, time, re
+
+regex=r'\d\.\d+'
+lt=[]
+class Prg1(unittest.TestCase):
+    def setUp(self):
+        self.driver = webdriver.Firefox()
+        self.driver.implicitly_wait(30)
+        self.base_url = "http://www.makautwb.net/"
+        self.verificationErrors = []
+        self.accept_next_alert = True
+    
+    def test_prg1(self):
+        roll=10300111001        
+        driver = self.driver
+        while roll<=10300111010:
+            driver.get(self.base_url + "/result_even.php")
+            driver.find_element_by_id("rollno").clear()
+            driver.find_element_by_id("rollno").send_keys(str(roll))
+            driver.find_element_by_id("sem_8").click()
+            varib = driver.find_element_by_xpath("//span[@id='lblContent']/table[3]/tbody/tr[4]/td[2]").text
+            #print varib
+            roll+=1
+            sto=re.findall(regex,varib)
+            lt.append(sto[0].encode('ascii'))
+        #print lt
+        
+    def is_element_present(self, how, what):
+        try: self.driver.find_element(by=how, value=what)
+        except NoSuchElementException, e: return False
+        return True
+    
+    def is_alert_present(self):
+        try: self.driver.switch_to_alert()
+        except NoAlertPresentException, e: return False
+        return True
+    
+    def close_alert_and_get_its_text(self):
+        try:
+            alert = self.driver.switch_to_alert()
+            alert_text = alert.text
+            if self.accept_next_alert:
+                alert.accept()
+            else:
+                alert.dismiss()
+            return alert_text
+        finally: self.accept_next_alert = True
+    
+    def tearDown(self):
+        self.driver.quit()
+        self.assertEqual([], self.verificationErrors)
+
+if __name__ == "__main__":
+    unittest.main()
